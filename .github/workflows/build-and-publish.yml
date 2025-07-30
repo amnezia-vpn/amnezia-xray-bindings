@@ -1,0 +1,65 @@
+name: 'Build and publish artifacts'
+
+on: push
+
+jobs:
+  Build-Windows:
+    strategy:
+      matrix:
+        include:
+          - { sys: mingw64, env: x86_64 }
+          - { sys: mingw32, env: i686 }
+
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install MSYS2 with dependencies
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: ${{matrix.sys}}
+          install: >-
+            mingw-w64-${{matrix.env}}-gcc
+            mingw-w64-${{matrix.env}}-tools-git
+            mingw-w64-${{matrix.env}}-go
+            make
+
+      - name: Build
+        shell: msys2 {0}
+        run: make
+
+      - name: Publish artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: amnezia-xray_windows-${{matrix.env}}
+          path: build/
+
+  Build-Unix:
+    strategy:
+      matrix:
+        include:
+          - { os: macos, arch: arm64, runs-on: macos-latest }
+          - { os: macos, arch: amd64, runs-on: macos-13 }
+          - { os: linux, arch: amd64, runs-on: ubuntu-latest }
+
+    runs-on: ${{matrix.runs-on}}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install golang
+        uses: actions/setup-go@v5
+        with:
+          go-version: '>=1.24'
+
+      - name: Build
+        run: make
+
+      - name: Publish artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: amnezia-xray_${{matrix.os}}-${{matrix.arch}}
+          path: build/

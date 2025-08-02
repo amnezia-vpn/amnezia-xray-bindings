@@ -17,6 +17,7 @@ jobs:
             mingw-w64-x86_64-gcc
             make
             coreutils
+            mingw-w64-x86_64-go
 
       - name: Build in MSYS2 shell
         shell: msys2 {0}

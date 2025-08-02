@@ -5,8 +5,16 @@ package main
 #include <string.h>
 #include <stdio.h>
 
-#ifndef LIBXRAY_DEF
-#define LIBXRAY_DEF
+#ifndef AMNEZIA_XRAY_DEF
+#define AMNEZIA_XRAY_DEF
+
+#ifdef _MSC_VER
+// MSVC does not support complex type definitions
+// So here is a workaround to bypass this behavior
+// See go.dev/issues/36233
+typedef float _Fcomplex;
+typedef double _Dcomplex;
+#endif
 
 typedef void (*amnezia_xray_sockcallback)(uintptr_t fd, void* ctx);
 typedef void (*amnezia_xray_loghandler)(char* str, void* ctx);
@@ -30,11 +38,11 @@ import (
 	"syscall"
 	"unsafe"
 
-	"github.com/amnezia-vpn/amnezia-xray-core/common/log"
-	"github.com/amnezia-vpn/amnezia-xray-core/transport/internet"
+	"github.com/xtls/xray-core/common/log"
+	"github.com/xtls/xray-core/transport/internet"
 
-	"github.com/amnezia-vpn/amnezia-xray-core/core"
-	_ "github.com/amnezia-vpn/amnezia-xray-core/main/distro/all"
+	"github.com/xtls/xray-core/core"
+	_ "github.com/xtls/xray-core/main/distro/all"
 )
 
 const NoError = 0

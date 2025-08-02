@@ -1,0 +1,29 @@
+name: 'Build and publish artifacts'
+
+on: push
+
+jobs:
+  Build-Windows:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install MSYS2 and MinGW toolchain
+        uses: msys2/setup-msys2@v2
+        with:
+          install: >-
+            mingw-w64-x86_64-gcc
+            make
+            coreutils
+
+      - name: Build in MSYS2 shell
+        shell: msys2 {0}
+        run: make
+
+      - name: Publish artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: win-x86_64_lib
+          path: build/

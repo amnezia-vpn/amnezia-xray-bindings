@@ -1,4 +1,8 @@
-OS := $(shell uname -s)
+ifneq ($(shell where cmd 2>nul || which cmd 2>/dev/null),)
+	OS = windows
+else
+	OS = unix
+endif
 
 BUILD_DIR = build
 
@@ -11,10 +15,12 @@ LIB_LIB = amnezia_xray.lib
 LIB_HDR = amnezia_xray.h
 LIB_DEF = amnezia_xray.def
 
-ifeq ($(OS),Windows_NT)
+ifeq ($(OS),windows)
 all: $(BUILD_DIR)/$(LIB_LIB)
+	@echo "Building for Windows"
 else
 all: $(BUILD_DIR)/$(LIB_ARC)
+	@echo "Building for Unix(like)"
 endif
 
 $(BUILD_DIR)/$(LIB_ARC): $(SOURCES)

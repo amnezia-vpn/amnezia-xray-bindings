@@ -22,9 +22,9 @@ jobs:
           msystem: ${{matrix.sys}}
           install: >-
             mingw-w64-${{matrix.env}}-gcc
-            make
-            coreutils
+            mingw-w64-${{matrix.env}}-tools-git
             mingw-w64-${{matrix.env}}-go
+            make
 
       - name: Build in MSYS2 shell
         shell: msys2 {0}

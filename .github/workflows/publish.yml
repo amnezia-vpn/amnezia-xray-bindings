@@ -21,7 +21,9 @@ jobs:
 
       - name: Build in MSYS2 shell
         shell: msys2 {0}
-        run: make
+        run: |
+          uname -s
+          make
 
       - name: Publish artifacts
         uses: actions/upload-artifact@v4

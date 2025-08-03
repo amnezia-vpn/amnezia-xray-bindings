@@ -22,11 +22,11 @@ all: $(BUILD_DIR)/$(LIB_ARC)
 endif
 
 $(BUILD_DIR)/$(LIB_ARC): $(SOURCES)
-	CGO_ENABLED=1 go build -o $(BUILD_DIR)/$(LIB_ARC) -buildmode=c-archive
+	CGO_ENABLED=1 go build -ldflags=-w -o $(BUILD_DIR)/$(LIB_ARC) -buildmode=c-archive
 
 $(BUILD_DIR)/$(LIB_DLL): $(SOURCES)
 	@mkdir -p $(BUILD_DIR)
-	CGO_ENABLED=1 go build -o $(BUILD_DIR)/$(LIB_DLL) -buildmode=c-shared
+	CGO_ENABLED=1 go build -ldflags=-w -o $(BUILD_DIR)/$(LIB_DLL) -buildmode=c-shared
 
 $(BUILD_DIR)/$(LIB_LIB): $(BUILD_DIR)/$(LIB_DLL)
 	cd $(BUILD_DIR) && gendef $(LIB_DLL)

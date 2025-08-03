@@ -8,7 +8,7 @@ BUILD_DIR = build
 
 SOURCES := main.go
 
-LIB_A 	= amnezia_xray.a
+LIB_ARC = amnezia_xray.a
 LIB_DLL = amnezia_xray.dll
 LIB_LIB = amnezia_xray.lib
 

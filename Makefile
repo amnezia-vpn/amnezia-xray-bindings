@@ -1,4 +1,4 @@
-ifneq ($(shell where cmd 2>nul || which cmd 2>/dev/null),)
+ifneq ($(shell which cmd 2>/dev/null),)
 	OS = windows
 else
 	OS = unix

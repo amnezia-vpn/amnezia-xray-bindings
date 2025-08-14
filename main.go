@@ -46,73 +46,66 @@ import (
 	_ "github.com/xtls/xray-core/main/distro/all"
 )
 
-const NoError = 0
-const GenericError = -1
-
 var server *core.Instance = nil
-var lastError error
 
 //export amnezia_xray_configure
-func amnezia_xray_configure(cConfig *C.char) C.int {
+func amnezia_xray_configure(cConfig *C.char) *C.char {
 	strConfig := C.GoString(cConfig)
 	cfgReader := bytes.NewReader([]byte(strConfig))
 
-	var coreConfig *core.Config
-	coreConfig, lastError = core.LoadConfig("json", cfgReader)
-	if lastError != nil {
-		return GenericError
+	coreConfig, err := core.LoadConfig("json", cfgReader)
+	if err != nil {
+		return C.CString(err.Error())
 	}
 
-	server, lastError = core.New(coreConfig)
-	if lastError != nil {
-		return GenericError
+	server, err = core.New(coreConfig)
+	if err != nil {
+		return C.CString(err.Error())
 	}
 
-	return NoError
+	return nil
 }
 
 //export amnezia_xray_start
-func amnezia_xray_start() C.int {
+func amnezia_xray_start() *C.char {
 	if server == nil {
-		return GenericError
+		return nil
 	}
 
-	lastError = server.Start()
-	if lastError != nil {
-		return GenericError
+	if err := server.Start(); err != nil {
+		return C.CString(err.Error())
 	}
 
-	return NoError
+	return nil
 }
 
 //export amnezia_xray_stop
-func amnezia_xray_stop() C.int {
+func amnezia_xray_stop() *C.char {
 	if server == nil {
-		return NoError
+		return nil
 	}
 
-	lastError = server.Close()
-	if lastError != nil {
-		return GenericError
+	if err := server.Close(); err != nil {
+		return C.CString(err.Error())
 	}
 
-	return NoError
+	return nil
 }
 
 //export amnezia_xray_setsockcallback
-func amnezia_xray_setsockcallback(cb C.amnezia_xray_sockcallback, ctx unsafe.Pointer) C.int {
-	lastError = internet.RegisterDialerController(func(net, addr string, conn syscall.RawConn) error {
+func amnezia_xray_setsockcallback(cb C.amnezia_xray_sockcallback, ctx unsafe.Pointer) *C.char {
+	err := internet.RegisterDialerController(func(net, addr string, conn syscall.RawConn) error {
 		conn.Control(func(fd uintptr) {
 			C.amnezia_xray_invokesockcallback(cb, C.uintptr_t(fd), ctx)
 		})
 		return nil
 	})
 
-	if lastError != nil {
-		return GenericError
+	if err != nil {
+		return C.CString(err.Error())
 	}
 
-	return NoError
+	return nil
 }
 
 type logHandler struct {

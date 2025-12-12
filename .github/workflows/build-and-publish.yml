@@ -28,7 +28,7 @@ jobs:
 
       - name: Build
         shell: msys2 {0}
-        run: make
+        run: OS=windows make
 
       - name: Publish artifacts
         uses: actions/upload-artifact@v4

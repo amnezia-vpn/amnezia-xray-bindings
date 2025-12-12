@@ -24,7 +24,7 @@ ifneq ($(SDK),)
 	CGO_CFLAGS += -isysroot $(shell xcrun --sdk $(SDK) --show-sdk-path)
 endif
 
-ifeq ($(TARGET_OS),windows)
+ifeq ($(OS),windows)
 all: $(BUILD_DIR)/$(LIB_LIB)
 else
 all: $(BUILD_DIR)/$(LIB_ARC)

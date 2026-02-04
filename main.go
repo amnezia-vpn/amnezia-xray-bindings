@@ -48,6 +48,11 @@ import (
 
 var server *core.Instance = nil
 
+//export amnezia_xray_free
+func amnezia_xray_free(ptr unsafe.Pointer) {
+	C.free(ptr)
+}
+
 //export amnezia_xray_configure
 func amnezia_xray_configure(cConfig *C.char) *C.char {
 	strConfig := C.GoString(cConfig)

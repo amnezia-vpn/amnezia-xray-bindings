@@ -39,7 +39,8 @@ import (
 	"syscall"
 	"unsafe"
 
-	"github.com/xtls/xray-core/common/log"
+	"github.com/xtls/xray-core/app/log"
+	cLog "github.com/xtls/xray-core/common/log"
 	"github.com/xtls/xray-core/transport/internet"
 
 	"github.com/xtls/xray-core/core"
@@ -113,21 +114,34 @@ func amnezia_xray_setsockcallback(cb C.amnezia_xray_sockcallback, ctx unsafe.Poi
 	return nil
 }
 
+func LogHandlerCreator(cb C.amnezia_xray_loghandler, ctx unsafe.Pointer) cLog.WriterCreator {
+	return func() cLog.Writer {
+		return &logHandler{cb: cb, ctx: ctx}
+	}
+}
+
 type logHandler struct {
 	cb  C.amnezia_xray_loghandler
 	ctx unsafe.Pointer
 }
 
-func (l *logHandler) Handle(msg log.Message) {
-	cMsg := C.CString(msg.String())
+func (l *logHandler) Write(msg string) error {
+	cMsg := C.CString(msg)
 	defer C.free(unsafe.Pointer(cMsg))
 
 	C.amnezia_xray_invokeloghandler(l.cb, cMsg, l.ctx)
+	return nil
+}
+
+func (l *logHandler) Close() error {
+	return nil
 }
 
 //export amnezia_xray_setloghandler
 func amnezia_xray_setloghandler(cb C.amnezia_xray_loghandler, ctx unsafe.Pointer) {
-	log.RegisterHandler(&logHandler{cb: cb, ctx: ctx})
+	log.RegisterHandlerCreator(log.LogType_Console, func(lt log.LogType, options log.HandlerCreatorOptions) (cLog.Handler, error) {
+		return cLog.NewLogger(LogHandlerCreator(cb, ctx)), nil
+	})
 }
 
 func main() {

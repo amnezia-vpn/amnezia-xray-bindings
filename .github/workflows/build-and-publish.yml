@@ -1,4 +1,4 @@
-name: 'Build and publish artifacts'
+name: 'Build artifacts'
 
 on: push
 
@@ -36,6 +36,20 @@ jobs:
           name: amnezia-xray_windows-${{matrix.env}}
           path: build/
 
+      - name: Zip folder
+        if: startsWith(github.ref, 'refs/tags/')
+        shell: powershell
+        run: Compress-Archive -Path "build" -DestinationPath "build.zip"
+
+      - name: Upload to release
+        uses: svenstaro/upload-release-action@v2
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          file: build.zip
+          asset_name: amnezia-xray_windows-${{matrix.env}}.zip
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          tag: ${{ github.ref }}
+
   Build-Unix:
     strategy:
       matrix:
@@ -65,3 +79,16 @@ jobs:
         with:
           name: amnezia-xray_${{matrix.os}}-${{matrix.arch}}
           path: build/
+
+      - name: Zip folder
+        if: startsWith(github.ref, 'refs/tags/')
+        run: zip -r build.zip build/
+
+      - name: Upload to release
+        uses: svenstaro/upload-release-action@v2
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          file: build.zip
+          asset_name: amnezia-xray_${{matrix.os}}-${{matrix.arch}}.zip
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          tag: ${{ github.ref }}

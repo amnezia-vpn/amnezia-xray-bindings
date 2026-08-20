@@ -2,7 +2,7 @@ module xray_binding
 
 go 1.26
 
-require github.com/xtls/xray-core v1.260724.0
+require github.com/xtls/xray-core v1.260728.0
 
 replace github.com/xtls/xray-core => github.com/amnezia-vpn/amnezia-xray-core v1.260724.0
 

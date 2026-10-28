@@ -36,6 +36,7 @@ import "C"
 
 import (
 	"bytes"
+	"sync"
 	"syscall"
 	"unsafe"
 
@@ -48,6 +49,58 @@ import (
 )
 
 var server *core.Instance = nil
+
+// core.Instance.Close only stops the listeners, established sessions keep
+// running, so outbound sockets are tracked and shut down explicitly on stop.
+var (
+	outboundConnsMu sync.Mutex
+	outboundConns   = map[syscall.RawConn]struct{}{}
+)
+
+const outboundConnsSweepThreshold = 1024
+
+func init() {
+	internet.RegisterDialerController(func(network, address string, conn syscall.RawConn) error {
+		trackOutboundConn(conn)
+		return nil
+	})
+}
+
+func trackOutboundConn(conn syscall.RawConn) {
+	outboundConnsMu.Lock()
+	defer outboundConnsMu.Unlock()
+
+	if len(outboundConns) >= outboundConnsSweepThreshold {
+		for c := range outboundConns {
+			if c.Control(func(uintptr) {}) != nil {
+				delete(outboundConns, c)
+			}
+		}
+	}
+	outboundConns[conn] = struct{}{}
+}
+
+func shutdownOutboundConns() {
+	outboundConnsMu.Lock()
+	conns := outboundConns
+	outboundConns = map[syscall.RawConn]struct{}{}
+	outboundConnsMu.Unlock()
+
+	for c := range conns {
+		_ = c.Control(shutdownFd)
+	}
+}
+
+func closeServer() error {
+	if server == nil {
+		return nil
+	}
+
+	err := server.Close()
+	server = nil
+	shutdownOutboundConns()
+	return err
+}
 
 //export amnezia_xray_free
 func amnezia_xray_free(ptr unsafe.Pointer) {
@@ -64,10 +117,13 @@ func amnezia_xray_configure(cConfig *C.char) *C.char {
 		return C.CString(err.Error())
 	}
 
-	server, err = core.New(coreConfig)
+	instance, err := core.New(coreConfig)
 	if err != nil {
 		return C.CString(err.Error())
 	}
+
+	_ = closeServer()
+	server = instance
 
 	return nil
 }
@@ -87,11 +143,7 @@ func amnezia_xray_start() *C.char {
 
 //export amnezia_xray_stop
 func amnezia_xray_stop() *C.char {
-	if server == nil {
-		return nil
-	}
-
-	if err := server.Close(); err != nil {
+	if err := closeServer(); err != nil {
 		return C.CString(err.Error())
 	}
 

@@ -1,6 +1,6 @@
 BUILD_DIR = build
 
-SOURCES := main.go
+SOURCES := $(wildcard *.go)
 
 LIB_ARC = amnezia_xray.a
 LIB_DLL = amnezia_xray.dll

@@ -49,6 +49,7 @@ import (
 )
 
 var server *core.Instance = nil
+var inboundPorts = map[int]struct{}{}
 
 // core.Instance.Close only stops the listeners, established sessions keep
 // running, so outbound sockets are tracked and shut down explicitly on stop.
@@ -99,6 +100,8 @@ func closeServer() error {
 	err := server.Close()
 	server = nil
 	shutdownOutboundConns()
+	shutdownInboundConns(inboundPorts)
+	inboundPorts = map[int]struct{}{}
 	return err
 }
 
@@ -124,6 +127,7 @@ func amnezia_xray_configure(cConfig *C.char) *C.char {
 
 	_ = closeServer()
 	server = instance
+	inboundPorts = inboundPortsOf(coreConfig)
 
 	return nil
 }

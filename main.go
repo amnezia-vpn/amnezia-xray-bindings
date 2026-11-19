@@ -154,9 +154,28 @@ func amnezia_xray_stop() *C.char {
 	return nil
 }
 
+var (
+	sockCallbackMu         sync.RWMutex
+	sockCallback           C.amnezia_xray_sockcallback
+	sockCallbackCtx        unsafe.Pointer
+	sockCallbackRegistered bool
+)
+
 //export amnezia_xray_setsockcallback
 func amnezia_xray_setsockcallback(cb C.amnezia_xray_sockcallback, ctx unsafe.Pointer) *C.char {
+	sockCallbackMu.Lock()
+	defer sockCallbackMu.Unlock()
+
+	sockCallback, sockCallbackCtx = cb, ctx
+	if sockCallbackRegistered {
+		return nil
+	}
+
 	err := internet.RegisterDialerController(func(net, addr string, conn syscall.RawConn) error {
+		sockCallbackMu.RLock()
+		cb, ctx := sockCallback, sockCallbackCtx
+		sockCallbackMu.RUnlock()
+
 		conn.Control(func(fd uintptr) {
 			C.amnezia_xray_invokesockcallback(cb, C.uintptr_t(fd), ctx)
 		})
@@ -167,6 +186,7 @@ func amnezia_xray_setsockcallback(cb C.amnezia_xray_sockcallback, ctx unsafe.Poi
 		return C.CString(err.Error())
 	}
 
+	sockCallbackRegistered = true
 	return nil
 }
 
